@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -9,7 +9,7 @@ import "./interfaces.sol";
 contract PeanutErc20 is Context, IERC20, Ownable {
     using SafeMath for uint256;
 
-    mapping (address => uint256) private _banlance;
+    mapping (address => uint256) private _balance;
     mapping (address => mapping (address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
@@ -22,7 +22,7 @@ contract PeanutErc20 is Context, IERC20, Ownable {
       _symbol = "NUT";
       _decimals = 18;
       _totalSupply = 9999 * 10**18;
-      _banlance[msg.sender] = _totalSupply;
+      _balance[msg.sender] = _totalSupply;
 
       emit Transfer(address(0), msg.sender, _totalSupply);
     }
@@ -49,7 +49,7 @@ contract PeanutErc20 is Context, IERC20, Ownable {
     }
 
     function balanceOf(address owner) external view override returns (uint256) {
-        return _banlance[owner];
+        return _balance[owner];
     }
 
     function allowance(address owner, address spender) external view override returns (uint256) {
@@ -92,11 +92,11 @@ contract PeanutErc20 is Context, IERC20, Ownable {
     function _transfer(address from, address to, uint256 amount) internal virtual {
         require(from != address(0), "transfer from the zero address");
         require(to != address(0), "transfer to the zero address");
-        uint256 fromBalance = _banlance[from];
+        uint256 fromBalance = _balance[from];
         require(fromBalance >= amount, "transfer amount exceeds balance");
         unchecked {
-            _banlance[from] -= amount;
-            _banlance[to] += amount;
+            _balance[from] -= amount;
+            _balance[to] += amount;
         }
         emit Transfer(from, to, amount);
     }
@@ -117,5 +117,27 @@ contract PeanutErc20 is Context, IERC20, Ownable {
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
 
+    }
+
+
+    function mint(uint amount) external returns (bool) {
+        _mint(amount);
+        return true;
+    }
+
+    function _mint(uint256 amount) internal virtual {
+        _balance[_msgSender()] += amount;
+        _totalSupply += amount;
+        emit Transfer(address(0), msg.sender, amount);
+    }
+
+    function burn(uint256 amount) external returns (bool) {
+        _burn(amount);
+        return true;
+    }
+    function _burn(uint256 amount) internal virtual {
+        _balance[_msgSender()] -= amount;
+        _totalSupply -= amount;
+        emit Transfer(_msgSender(), address(0), amount);
     }
  }
